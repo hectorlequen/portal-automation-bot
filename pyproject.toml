@@ -1,0 +1,9 @@
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "F",  # pyflakes (imports inutilisés, variables inutilisées, etc.)
+    "I",  # isort (tri des imports)
+]
