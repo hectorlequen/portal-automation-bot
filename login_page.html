@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Login</title>
+</head>
+<body>
+  <form id="login-form">
+    <label for="username">Nom d'utilisateur</label>
+    <input type="text" id="username" placeholder="Nom d'utilisateur">
+
+    <label for="password">Mot de passe</label>
+    <input type="password" id="password" placeholder="Mot de passe">
+
+    <button type="submit" id="login-btn">Se connecter</button>
+  </form>
+
+  <p id="error-message"></p>
+
+  <script>
+    document.getElementById("login-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+      const errorMessage = document.getElementById("error-message");
+
+      if (username === "demo" && password === "demo123") {
+        errorMessage.textContent = "";
+        window.location.href = "dashboard.html";
+      } else {
+        errorMessage.textContent = "Identifiants incorrects.";
+      }
+    });
+  </script>
+</body>
+</html>
