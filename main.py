@@ -1,6 +1,10 @@
+import os
 from pathlib import Path
 
+from dotenv import load_dotenv
 from playwright.sync_api import TimeoutError, sync_playwright
+
+load_dotenv()
 
 
 class PortalBot:
@@ -24,8 +28,15 @@ with sync_playwright() as p:
     page = browser.new_page()
     page.goto(Path("login_page.html").resolve().as_uri())
 
+    portal_username = os.environ.get("PORTAL_USERNAME")
+    portal_password = os.environ.get("PORTAL_PASSWORD")
+    if not portal_username:
+        raise EnvironmentError("PORTAL_USERNAME is missing from .env")
+    if not portal_password:
+        raise EnvironmentError("PORTAL_PASSWORD is missing from .env")
+
     bot = PortalBot(page, "#username", "#password", "#login-btn")
-    bot.login("demo", "demo123")
+    bot.login(portal_username, portal_password)
     try:
         bot.check_login_success("**/dashboard.html")
     except TimeoutError:
