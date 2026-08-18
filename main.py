@@ -1,9 +1,16 @@
+import logging
 import os
 from pathlib import Path
 
 import yaml
 from dotenv import load_dotenv
 from playwright.sync_api import TimeoutError, sync_playwright
+
+logging.basicConfig(
+    level=logging.INFO,
+    handlers=[logging.StreamHandler(), logging.FileHandler("bot.log")],
+)
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -50,8 +57,8 @@ with sync_playwright() as p:
     try:
         bot.check_login_success(site_config["url_success"])
     except TimeoutError:
-        print("Login failed: credentials are probably incorrect")
+        logger.error("Login failed: credentials are probably incorrect")
 
-    print(page.url)
+    logger.info(page.url)
     page.wait_for_timeout(5000)
     browser.close()
