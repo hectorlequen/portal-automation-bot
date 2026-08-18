@@ -1,10 +1,15 @@
 import os
 from pathlib import Path
 
+import yaml
 from dotenv import load_dotenv
 from playwright.sync_api import TimeoutError, sync_playwright
 
 load_dotenv()
+
+with open("config.yaml") as f:
+    config = yaml.safe_load(f)
+site_config = config["sites"]["demo_portal"]
 
 
 class PortalBot:
@@ -26,7 +31,7 @@ class PortalBot:
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=False)
     page = browser.new_page()
-    page.goto(Path("login_page.html").resolve().as_uri())
+    page.goto(Path(site_config["url_login"]).resolve().as_uri())
 
     portal_username = os.environ.get("PORTAL_USERNAME")
     portal_password = os.environ.get("PORTAL_PASSWORD")
@@ -35,10 +40,15 @@ with sync_playwright() as p:
     if not portal_password:
         raise EnvironmentError("PORTAL_PASSWORD is missing from .env")
 
-    bot = PortalBot(page, "#username", "#password", "#login-btn")
+    bot = PortalBot(
+        page,
+        site_config["username_selector"],
+        site_config["password_selector"],
+        site_config["login_button_selector"],
+    )
     bot.login(portal_username, portal_password)
     try:
-        bot.check_login_success("**/dashboard.html")
+        bot.check_login_success(site_config["url_success"])
     except TimeoutError:
         print("Login failed: credentials are probably incorrect")
 
