@@ -2,6 +2,7 @@ import logging
 import os
 from pathlib import Path
 
+import requests
 import typer
 import yaml
 from dotenv import load_dotenv
@@ -39,6 +40,17 @@ class PortalBot:
         self.page.wait_for_url(success_url_pattern, timeout=timeout)
 
 
+def notify_slack(message: str):
+    webhook_url = os.environ.get("SLACK_WEBHOOK_URL")
+    if not webhook_url:
+        logger.info("No Slack webhook URL found")
+        return
+    try:
+        requests.post(webhook_url, json={"text": message})
+    except requests.RequestException:
+        logger.error("Failed to send Slack notification")
+
+
 def main(
     site: str = typer.Option("demo_portal", help="Site name from config.yaml"),
     display_browser: bool = typer.Option(
@@ -73,6 +85,7 @@ def main(
             bot.check_login_success(site_config["url_success"])
         except TimeoutError:
             logger.error("Login failed: credentials are probably incorrect")
+            notify_slack(f"Login failed for site '{site}': credentials are probably incorrect")
 
         logger.info(page.url)
         page.wait_for_timeout(5000)
