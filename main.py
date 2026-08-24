@@ -5,6 +5,7 @@ from pathlib import Path
 import yaml
 from dotenv import load_dotenv
 from playwright.sync_api import TimeoutError, sync_playwright
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 logging.basicConfig(
     level=logging.INFO,
@@ -31,6 +32,9 @@ class PortalBot:
         self.page.fill(self.password_selector, password)
         self.page.click(self.login_button_selector)
 
+    @retry(
+        stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=5), reraise=True
+    )
     def check_login_success(self, success_url_pattern, timeout=3000):
         self.page.wait_for_url(success_url_pattern, timeout=timeout)
 
