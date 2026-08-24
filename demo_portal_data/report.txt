@@ -1,0 +1,3 @@
+invoice_id,amount,status
+INV-001,150.00,paid
+INV-002,89.50,pending
