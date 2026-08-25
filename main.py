@@ -1,5 +1,6 @@
 import logging
 import os
+from pathlib import Path
 
 import requests
 import typer
@@ -37,6 +38,16 @@ class PortalBot:
     )
     def check_login_success(self, success_url_pattern, timeout=3000):
         self.page.wait_for_url(success_url_pattern, timeout=timeout)
+
+    @retry(
+        stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=5), reraise=True
+    )
+    def download_report(self, download_link_selector, destination_dir):
+        Path(destination_dir).mkdir(parents=True, exist_ok=True)
+        with self.page.expect_download() as download_info:
+            self.page.click(download_link_selector)
+        download = download_info.value
+        download.save_as(Path(destination_dir) / download.suggested_filename)
 
 
 def notify_slack(message: str):
@@ -82,6 +93,7 @@ def main(
         bot.login(portal_username, portal_password)
         try:
             bot.check_login_success(site_config["url_success"])
+            bot.download_report(site_config["download_link_selector"], "downloads")
         except TimeoutError:
             logger.error("Login failed: credentials are probably incorrect")
             notify_slack(f"Login failed for site '{site}': credentials are probably incorrect")

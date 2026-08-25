@@ -4,4 +4,5 @@ sites:
     username_selector: "#username"
     password_selector: "#password"
     login_button_selector: "button[type=submit]"
+    download_link_selector: 'a[href="/download"]'
     url_success: "**/dashboard"
