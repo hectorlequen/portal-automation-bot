@@ -1,0 +1,22 @@
+services:
+  demo_portal:
+    build:
+      context: .
+      dockerfile: Dockerfile.demo_portal
+    env_file:
+      - .env
+    ports:
+      - "5000:5000"
+
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./downloads:/app/downloads
+    command: ["python", "main.py", "--site", "demo_portal_docker", "--no-display-browser"]
+    depends_on:
+      - demo_portal

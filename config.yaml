@@ -6,3 +6,10 @@ sites:
     login_button_selector: "button[type=submit]"
     download_link_selector: 'a[href="/download"]'
     url_success: "**/dashboard"
+  demo_portal_docker:
+    url_login: "http://demo_portal:5000/login"
+    username_selector: "#username"
+    password_selector: "#password"
+    login_button_selector: "button[type=submit]"
+    download_link_selector: 'a[href="/download"]'
+    url_success: "**/dashboard"
