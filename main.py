@@ -1,6 +1,5 @@
 import logging
 import os
-from pathlib import Path
 
 import requests
 import typer
@@ -65,7 +64,7 @@ def main(
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=not display_browser)
         page = browser.new_page()
-        page.goto(Path(site_config["url_login"]).resolve().as_uri())
+        page.goto(site_config["url_login"])
 
         portal_username = os.environ.get("PORTAL_USERNAME")
         portal_password = os.environ.get("PORTAL_PASSWORD")

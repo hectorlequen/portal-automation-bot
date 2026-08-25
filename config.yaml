@@ -1,7 +1,7 @@
 sites:
   demo_portal:
-    url_login: "login_page.html"
+    url_login: "http://localhost:5000/login"
     username_selector: "#username"
     password_selector: "#password"
-    login_button_selector: "#login-btn"
-    url_success: "**/dashboard.html"
+    login_button_selector: "button[type=submit]"
+    url_success: "**/dashboard"
