@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import requests
 
-from main import notify_slack
+from app.notifications import notify_slack
 
 
 def test_notify_slack_without_webhook_url_does_not_post(monkeypatch):

@@ -1,9 +1,11 @@
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 from flask import Flask, redirect, request, send_from_directory, session, url_for
 
-load_dotenv()
+BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR.parent / ".env")
 
 app = Flask(__name__)
 
@@ -12,7 +14,7 @@ if not secret_key:
     raise EnvironmentError("FLASK_SECRET_KEY is missing from .env")
 app.secret_key = secret_key
 
-DOWNLOAD_DIR = "demo_portal_data"
+DOWNLOAD_DIR = BASE_DIR / "demo_portal_data"
 DOWNLOAD_FILENAME = "report.txt"
 
 

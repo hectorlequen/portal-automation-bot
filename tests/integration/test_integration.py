@@ -6,8 +6,9 @@ import requests
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from playwright.sync_api import sync_playwright
 
-import demo_portal
-import main as main_module
+from app.bot import PortalBot
+from app.config import config
+from demo_portal.app import app as demo_portal_app
 
 pytestmark = pytest.mark.integration
 
@@ -19,7 +20,7 @@ BASE_URL = f"http://{HOST}:{PORT}"
 @pytest.fixture(scope="module")
 def live_server():
     thread = threading.Thread(
-        target=demo_portal.app.run,
+        target=demo_portal_app.run,
         kwargs={"host": HOST, "port": PORT, "use_reloader": False},
         daemon=True,
     )
@@ -39,7 +40,7 @@ def live_server():
 
 def test_full_login_and_download_flow(live_server, tmp_path):
     """Exercises config.yaml's real selectors against the real demo_portal HTML."""
-    site_config = main_module.config["sites"]["demo_portal"]
+    site_config = config["sites"]["demo_portal"]
     destination_dir = tmp_path / "downloads"
 
     with sync_playwright() as p:
@@ -47,7 +48,7 @@ def test_full_login_and_download_flow(live_server, tmp_path):
         page = browser.new_page()
         page.goto(f"{live_server}/login")
 
-        bot = main_module.PortalBot(
+        bot = PortalBot(
             page,
             site_config["username_selector"],
             site_config["password_selector"],
@@ -65,14 +66,14 @@ def test_full_login_and_download_flow(live_server, tmp_path):
 
 
 def test_login_with_wrong_credentials_never_reaches_dashboard(live_server):
-    site_config = main_module.config["sites"]["demo_portal"]
+    site_config = config["sites"]["demo_portal"]
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
         page.goto(f"{live_server}/login")
 
-        bot = main_module.PortalBot(
+        bot = PortalBot(
             page,
             site_config["username_selector"],
             site_config["password_selector"],

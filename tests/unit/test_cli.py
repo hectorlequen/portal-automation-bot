@@ -1,5 +1,4 @@
 from contextlib import contextmanager
-from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
@@ -7,14 +6,14 @@ import typer
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from typer.testing import CliRunner
 
-import main as main_module
+from app import cli as cli_module
 
 runner = CliRunner()
 
 
 def make_app():
     app = typer.Typer()
-    app.command()(main_module.main)
+    app.command()(cli_module.main)
     return app
 
 
@@ -39,8 +38,14 @@ def fake_playwright(monkeypatch, fake_page):
     def fake_sync_playwright():
         yield fake_p
 
-    monkeypatch.setattr(main_module, "sync_playwright", fake_sync_playwright)
+    monkeypatch.setattr(cli_module, "sync_playwright", fake_sync_playwright)
     return fake_p
+
+
+@pytest.fixture(autouse=True)
+def isolated_download_dir(monkeypatch, tmp_path):
+    """Prevent any test from writing into the real repo's downloads/ folder."""
+    monkeypatch.setattr(cli_module, "DOWNLOAD_DIR", tmp_path / "downloads")
 
 
 def test_unknown_site_raises_error(fake_playwright):
@@ -65,10 +70,9 @@ def test_missing_password_raises_error(fake_playwright, monkeypatch):
     assert isinstance(result.exception, EnvironmentError)
 
 
-def test_successful_login_downloads_report(fake_playwright, monkeypatch, tmp_path):
+def test_successful_login_downloads_report(fake_playwright, monkeypatch):
     monkeypatch.setenv("PORTAL_USERNAME", "demo")
     monkeypatch.setenv("PORTAL_PASSWORD", "demo123")
-    monkeypatch.chdir(tmp_path)
     page = fake_playwright.chromium.launch.return_value.new_page.return_value
 
     result = runner.invoke(make_app(), ["--site", "demo_portal", "--no-display-browser"])
@@ -79,7 +83,7 @@ def test_successful_login_downloads_report(fake_playwright, monkeypatch, tmp_pat
     page.wait_for_url.assert_called_once_with("**/dashboard", timeout=3000)
     page.click.assert_any_call('a[href="/download"]')
     downloaded = page.expect_download.return_value.__enter__.return_value.value
-    downloaded.save_as.assert_called_once_with(Path("downloads") / "report.txt")
+    downloaded.save_as.assert_called_once_with(cli_module.DOWNLOAD_DIR / "report.txt")
 
 
 def test_login_failure_sends_slack_notification(fake_playwright, monkeypatch):
@@ -89,7 +93,7 @@ def test_login_failure_sends_slack_notification(fake_playwright, monkeypatch):
     page.wait_for_url.side_effect = PlaywrightTimeoutError("timeout")
 
     mock_notify = MagicMock()
-    monkeypatch.setattr(main_module, "notify_slack", mock_notify)
+    monkeypatch.setattr(cli_module, "notify_slack", mock_notify)
 
     result = runner.invoke(make_app(), ["--site", "demo_portal", "--no-display-browser"])
 
