@@ -21,6 +21,10 @@ Many businesses have a recurring manual task: log into a portal (supplier extran
 
 This project includes an automated test suite that verifies the bot's behavior across different scenarios (successful login, incorrect credentials, temporarily unavailable site, interrupted download) — to ensure stable behavior in production, not just "it works on my machine."
 
+## Slack notifications
+
+The demo uses [Webhook.site](https://webhook.site) as a mock webhook endpoint, so failure alerts can be observed without a real Slack workspace. In a production environment, this is replaced with a real Slack Incoming Webhook URL — no code changes required, just a different value in the environment configuration.
+
 ## Demo
 
 The repository includes a reproducible demo portal: a login page, a protected area, and a document to download — so the bot can be observed in action without depending on a third-party site.
