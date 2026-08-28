@@ -28,6 +28,8 @@ Many businesses have a recurring manual task: log into a portal (supplier extran
 
 ## Demo
 
+![Bot demo](assets/portal-bot-demo.gif)
+
 The repository includes a reproducible demo portal: a login page, a protected area, and a document to download — so the bot can be observed end to end without depending on a third-party site.
 
 The bot can run with or without the browser window visible, useful for a live demonstration as well as unattended background execution.
