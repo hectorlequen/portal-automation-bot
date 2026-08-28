@@ -1,3 +1,4 @@
+import logging
 from unittest.mock import MagicMock
 
 import pytest
@@ -28,14 +29,17 @@ def test_check_login_success_waits_for_expected_url(bot, page):
     page.wait_for_url.assert_called_once_with("**/dashboard", timeout=1234)
 
 
-def test_check_login_success_retries_then_succeeds(bot, page):
+def test_check_login_success_retries_then_succeeds(bot, page, caplog):
     page.wait_for_url.side_effect = [
         PlaywrightTimeoutError("timeout"),
         PlaywrightTimeoutError("timeout"),
         None,
     ]
-    bot.check_login_success("**/dashboard")
+    with caplog.at_level(logging.WARNING):
+        bot.check_login_success("**/dashboard")
     assert page.wait_for_url.call_count == 3
+    assert "Login failed - retry 1/3" in caplog.text
+    assert "Login failed - retry 2/3" in caplog.text
 
 
 def test_check_login_success_reraises_after_max_attempts(bot, page):
@@ -62,13 +66,14 @@ def test_download_report_clicks_link_and_saves_file(bot, page, tmp_path):
     fake_download.suggested_filename = "report.txt"
     page.expect_download.return_value.__enter__.return_value.value = fake_download
 
-    bot.download_report('a[href="/download"]', str(destination))
+    saved_path = bot.download_report('a[href="/download"]', str(destination))
 
     page.click.assert_called_once_with('a[href="/download"]')
     fake_download.save_as.assert_called_once_with(destination / "report.txt")
+    assert saved_path == destination / "report.txt"
 
 
-def test_download_report_retries_on_failure(bot, page, tmp_path):
+def test_download_report_retries_on_failure(bot, page, tmp_path, caplog):
     fake_download = MagicMock()
     fake_download.suggested_filename = "report.txt"
     fake_context = MagicMock()
@@ -79,6 +84,16 @@ def test_download_report_retries_on_failure(bot, page, tmp_path):
         fake_context,
     ]
 
-    bot.download_report('a[href="/download"]', str(tmp_path / "downloads"))
+    with caplog.at_level(logging.WARNING):
+        bot.download_report('a[href="/download"]', str(tmp_path / "downloads"))
 
+    assert page.expect_download.call_count == 3
+    assert "Download failed - retry 1/3" in caplog.text
+    assert "Download failed - retry 2/3" in caplog.text
+
+
+def test_download_report_reraises_after_max_attempts(bot, page, tmp_path):
+    page.expect_download.side_effect = PlaywrightTimeoutError("timeout")
+    with pytest.raises(PlaywrightTimeoutError):
+        bot.download_report('a[href="/download"]', str(tmp_path / "downloads"))
     assert page.expect_download.call_count == 3
