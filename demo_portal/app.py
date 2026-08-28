@@ -20,11 +20,19 @@ DOWNLOAD_FILENAME = "report.txt"
 
 @app.route("/")
 def home():
+    """Returns a static greeting confirming the server is running."""
     return "Hello Flask"
 
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    """Serves the login form and handles login submissions.
+
+    GET returns the login form (200). POST checks the submitted
+    username/password against the hardcoded demo credentials: on success it
+    sets session["logged_in"] and redirects (302) to /dashboard; on failure it
+    returns 401 with an "Invalid credentials" body.
+    """
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
@@ -48,6 +56,11 @@ def login():
 
 @app.route("/dashboard")
 def dashboard():
+    """Returns the dashboard page, or redirects to /login if not authenticated.
+
+    Returns 200 with a link to /download if session["logged_in"] is set,
+    otherwise redirects (302) to /login.
+    """
     if not session.get("logged_in"):
         return redirect(url_for("login"))
 
@@ -59,6 +72,11 @@ def dashboard():
 
 @app.route("/download")
 def download():
+    """Serves the demo report file, or redirects to /login if not authenticated.
+
+    Returns DOWNLOAD_DIR/DOWNLOAD_FILENAME as an attachment (200) if
+    session["logged_in"] is set, otherwise redirects (302) to /login.
+    """
     if not session.get("logged_in"):
         return redirect(url_for("login"))
 

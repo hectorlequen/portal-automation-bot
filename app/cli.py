@@ -18,6 +18,23 @@ def main(
         True, help="Show the browser window (use --no-display-browser to run headless)"
     ),
 ):
+    """Logs into the configured portal, downloads its report, and reports the result.
+
+    Runs the pipeline login -> verify login -> download -> verify download.
+    A Slack notification is sent via notify_slack in both cases: a success
+    message on completion, or a failure message identifying which step failed
+    (login, download, or verification) as soon as one does not complete.
+
+    Args:
+        site: Site name to look up in config.yaml.
+        display_browser: Whether to show the browser window (headless
+            otherwise).
+
+    Raises:
+        ValueError: If site is not defined in config.yaml.
+        EnvironmentError: If PORTAL_USERNAME or PORTAL_PASSWORD is missing.
+        typer.Exit: With code 1 if login, download, or verification fails.
+    """
     logger.info("Automation started")
     site_config = get_site_config(site)
 
