@@ -1,6 +1,7 @@
 import os
 
 import typer
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from playwright.sync_api import sync_playwright
 
 from app.bot import MAX_ATTEMPTS, PortalBot
@@ -41,13 +42,14 @@ def main(
             site_config["username_selector"],
             site_config["password_selector"],
             site_config["login_button_selector"],
+            logger=logger,
         )
         bot.login(portal_username, portal_password)
 
         try:
             bot.check_login_success(site_config["url_success"])
             logger.info("Login successful")
-        except Exception as exc:
+        except PlaywrightTimeoutError as exc:
             logger.error("Login failed after %d attempts: %s", MAX_ATTEMPTS, exc)
             failed_step = "login"
             failed_error = str(exc)
@@ -58,7 +60,7 @@ def main(
                 saved_path = bot.download_report(
                     site_config["download_link_selector"], str(DOWNLOAD_DIR)
                 )
-            except Exception as exc:
+            except PlaywrightTimeoutError as exc:
                 logger.error("Download failed after %d attempts: %s", MAX_ATTEMPTS, exc)
                 failed_step = "download"
                 failed_error = str(exc)

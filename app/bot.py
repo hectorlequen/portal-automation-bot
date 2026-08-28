@@ -2,26 +2,34 @@ from pathlib import Path
 
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from app.logging_setup import logger
-
 MAX_ATTEMPTS = 3
 
 
 def _log_retry(step_name):
     def _before_sleep(retry_state):
-        logger.warning(
-            "%s failed - retry %d/%d", step_name, retry_state.attempt_number, MAX_ATTEMPTS
-        )
+        # retry_state.args holds the positional arguments the wrapped method was
+        # called with. Since @retry decorates the plain function before it becomes
+        # a bound method, args[0] is `self` — the PortalBot instance — which is how
+        # this module-level callback reaches the instance's injected logger without
+        # importing one itself.
+        instance = retry_state.args[0]
+        if instance.logger is not None:
+            instance.logger.warning(
+                "%s failed - retry %d/%d", step_name, retry_state.attempt_number, MAX_ATTEMPTS
+            )
 
     return _before_sleep
 
 
 class PortalBot:
-    def __init__(self, page, username_selector, password_selector, login_button_selector):
+    def __init__(
+        self, page, username_selector, password_selector, login_button_selector, logger=None
+    ):
         self.page = page
         self.username_selector = username_selector
         self.password_selector = password_selector
         self.login_button_selector = login_button_selector
+        self.logger = logger
 
     def login(self, username, password):
         self.page.fill(self.username_selector, username)

@@ -14,7 +14,8 @@ def page():
 
 @pytest.fixture
 def bot(page):
-    return PortalBot(page, "#username", "#password", "button[type=submit]")
+    test_logger = logging.getLogger("test.portal_bot")
+    return PortalBot(page, "#username", "#password", "button[type=submit]", logger=test_logger)
 
 
 def test_login_fills_and_clicks_with_correct_selectors(bot, page):
@@ -97,3 +98,13 @@ def test_download_report_reraises_after_max_attempts(bot, page, tmp_path):
     with pytest.raises(PlaywrightTimeoutError):
         bot.download_report('a[href="/download"]', str(tmp_path / "downloads"))
     assert page.expect_download.call_count == 3
+
+
+def test_check_login_success_retries_without_a_logger_does_not_crash(page):
+    """PortalBot has no logging dependency of its own: logger=None must be safe."""
+    bot_without_logger = PortalBot(page, "#username", "#password", "button[type=submit]")
+    page.wait_for_url.side_effect = [PlaywrightTimeoutError("timeout"), None]
+
+    bot_without_logger.check_login_success("**/dashboard")
+
+    assert page.wait_for_url.call_count == 2

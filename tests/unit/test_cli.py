@@ -143,6 +143,19 @@ def test_login_failure_returns_failure_and_notifies(fake_playwright, monkeypatch
     assert "error=Timeout 3000ms exceeded" in message
 
 
+def test_programming_bug_during_login_is_not_swallowed(fake_playwright, monkeypatch, mock_notify):
+    """A real bug (not a Playwright timeout) must crash loudly, not be reported as a failed step."""
+    monkeypatch.setenv("PORTAL_USERNAME", "demo")
+    monkeypatch.setenv("PORTAL_PASSWORD", "demo123")
+    page = fake_playwright.chromium.launch.return_value.new_page.return_value
+    page.wait_for_url.side_effect = AttributeError("'NoneType' object has no attribute 'foo'")
+
+    result = runner.invoke(make_app(), ["--site", "demo_portal", "--no-display-browser"])
+
+    assert isinstance(result.exception, AttributeError)
+    mock_notify.assert_not_called()
+
+
 def test_download_failure_returns_failure_and_notifies(fake_playwright, monkeypatch, mock_notify):
     monkeypatch.setenv("PORTAL_USERNAME", "demo")
     monkeypatch.setenv("PORTAL_PASSWORD", "demo123")
