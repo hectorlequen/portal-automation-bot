@@ -31,32 +31,30 @@ The repository includes a reproducible demo portal: a login page, a protected ar
 
 The bot can run with or without the browser window visible, useful for a live demo as well as unattended background execution.
 
-## Architecture
+## Project Structure
 
-Each run follows the same clear pipeline — login, verification, download, verification — with retries and status notifications built in rather than bolted on:
-
-```mermaid
-flowchart TB
-    Config[("config.yaml + .env")] --> CLI
-
-    subgraph CLI["app/cli.py — orchestrator"]
-        direction TB
-        Start(["START"]) --> Login["LOGIN"] --> VerifyLogin{"VERIFY LOGIN<br/>(retry × 3)"}
-        VerifyLogin -- ok --> Download["DOWNLOAD<br/>(retry × 3)"] --> VerifyDownload{"VERIFY DOWNLOAD"}
-        VerifyLogin -- retries exhausted --> Failure["FAILURE"]
-        Download -- retries exhausted --> Failure
-        VerifyDownload -- file missing --> Failure
-        VerifyDownload -- ok --> Success["SUCCESS"]
-    end
-
-    CLI --> Bot["app/bot.py — PortalBot<br/>login · check_login_success · download_report<br/>(auto-retry with backoff)"]
-    Bot -- drives a real browser --> Portal[("Target web portal<br/>(demo: local Flask app)")]
-    Portal -- document --> Downloads[("downloads/")]
-
-    Success --> Notify["app/notifications.py"]
-    Failure --> Notify
-    Notify --> Webhook[("Slack / Webhook.site")]
-    CLI --> Logs[("bot.log + console")]
+```text
+portal-automation-bot/
+├── app/
+│   ├── bot.py                # Browser automation logic
+│   ├── cli.py                # CLI entry point and workflow orchestration
+│   ├── config.py             # Configuration loading and validation
+│   ├── logging_setup.py      # Logging configuration
+│   └── notifications.py      # Webhook notifications
+├── demo_portal/
+│   ├── app.py                # Flask demo portal
+│   └── demo_portal_data/     # Demo files available for download
+├── tests/
+│   ├── unit/                 # Unit tests
+│   └── integration/          # End-to-end integration tests
+├── config.yaml               # Portal URLs and selectors
+├── .env.example              # Environment variables template
+├── Dockerfile                # Bot container
+├── docker-compose.yml         # Bot and demo portal orchestration
+├── pyproject.toml            # Project and Ruff configuration
+├── requirements.txt          # Production dependencies
+├── requirements-dev.txt      # Development dependencies
+└── README.md                 # Project documentation
 ```
 
 Configuration and secrets are fully external (`config.yaml`, `.env`) so the same code adapts to a new portal or client without modification. A companion demo portal (`demo_portal/`) reproduces a real login flow locally, so the whole pipeline can be observed end to end without depending on a third-party site.
